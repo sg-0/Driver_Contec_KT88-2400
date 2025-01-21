@@ -247,7 +247,7 @@ namespace ContecKT88_2400_Driver
             SendCommand(0x91, 0x01);
             Thread.Sleep(300);
 
-            // 4) additional command
+            // 4) prevent baseline drift
             SendCommand(0x90, 0x09);
             Thread.Sleep(300);
 
@@ -334,47 +334,65 @@ namespace ContecKT88_2400_Driver
         /// </summary>
         private float[] ParseEegData(byte[] packet)
         {
-
-            // 2 start bytes (e0 01) or (a0 ...). 
-            // 46 bytes per data block.
-
             const int numChannels = 26;
             float[] channels = new float[numChannels];
 
-            if (packet.Length < 46)
+            // Safety check: we expect 46 bytes total
+            if (packet == null || packet.Length < 46)
                 return channels;
 
-            byte[] chunk = new byte[45];
-            Array.Copy(packet, 1, chunk, 0, 45); // skip the first marker byte
+             byte[] chunk = new byte[45];
+            Array.Copy(packet, 1, chunk, 0, 45);
 
-
+            // An int array to store raw 12-bit values for each channel
             int[] channelRaw = new int[numChannels];
-            for (int i = 0; i < numChannels; i++)
-            {
-                channelRaw[i] = 0;
-            }
 
+ 
             int cIndex = 0;
             for (int bt = 6; bt < 45; bt += 3)
             {
                 channelRaw[cIndex] =
-                    ((chunk[bt] & 0b01110000) << 4) |
-                     (chunk[bt + 1] & 0b01111111);
+                    ((chunk[bt] & 0b01110000) << 4)
+                    | (chunk[bt + 1] & 0b01111111);
 
-                if (bt + 2 < 45 && cIndex + 1 < numChannels)
+                if ((bt + 2) < 45 && (cIndex + 1) < numChannels)
                 {
                     channelRaw[cIndex + 1] =
-                        ((chunk[bt] & 0b00001111) << 8) |
-                         (chunk[bt + 2] & 0b01111111);
+                        ((chunk[bt] & 0b00001111) << 8)
+                        | (chunk[bt + 2] & 0b01111111);
                 }
+
                 cIndex += 2;
                 if (cIndex >= numChannels) break;
             }
 
             channelRaw[0] |= ((chunk[0] & 0b00000001) << 11) | ((chunk[0] & 0b00000010) << 6);
+            channelRaw[1] |= (chunk[0] & 0b00000100) << 5;
+            channelRaw[2] |= ((chunk[0] & 0b00001000) << 8) | ((chunk[1] & 0b00000001) << 7);
+            channelRaw[3] |= (chunk[1] & 0b00000010) << 6;
+            channelRaw[4] |= ((chunk[1] & 0b00000100) << 9) | ((chunk[1] & 0b00001000) << 4);
+            channelRaw[5] |= (chunk[1] & 0b00010000) << 3;
+            channelRaw[6] |= ((chunk[1] & 0b00100000) << 6) | ((chunk[1] & 0b01000000) << 1);
+            channelRaw[7] |= (chunk[2] & 0b00000001) << 7;
+            channelRaw[8] |= ((chunk[2] & 0b00000010) << 10) | ((chunk[2] & 0b00000100) << 5);
+            channelRaw[9] |= (chunk[2] & 0b00001000) << 4;
+            channelRaw[10] |= ((chunk[2] & 0b00010000) << 7) | ((chunk[2] & 0b00100000) << 2);
+            channelRaw[11] |= (chunk[2] & 0b01000000) << 1;
+            channelRaw[12] |= ((chunk[3] & 0b00000001) << 11) | ((chunk[3] & 0b00000010) << 6);
+            channelRaw[13] |= (chunk[3] & 0b00000100) << 5;
+            channelRaw[14] |= ((chunk[3] & 0b00001000) << 8) | ((chunk[3] & 0b00010000) << 3);
+            channelRaw[15] |= (chunk[3] & 0b00100000) << 2;
+            channelRaw[16] |= ((chunk[3] & 0b01000000) << 5) | ((chunk[4] & 0b00000001) << 7);
+            channelRaw[17] |= (chunk[4] & 0b00000010) << 6;
+            channelRaw[18] |= ((chunk[4] & 0b00000100) << 9) | ((chunk[4] & 0b00001000) << 4);
+            channelRaw[19] |= (chunk[4] & 0b00010000) << 3;
+            channelRaw[20] |= ((chunk[4] & 0b00100000) << 6) | ((chunk[4] & 0b01000000) << 1);
+            channelRaw[21] |= (chunk[5] & 0b00000001) << 7;
+            channelRaw[22] |= ((chunk[5] & 0b00000010) << 10) | ((chunk[5] & 0b00000100) << 5);
+            channelRaw[23] |= (chunk[5] & 0b00001000) << 4;
+            channelRaw[24] |= ((chunk[5] & 0b00010000) << 7) | ((chunk[5] & 0b00100000) << 2);
+            channelRaw[25] |= (chunk[5] & 0b01000000) << 1;
 
-
-            // Convert the 12-bit raw data to float (subtract 2048, scale by 1/10)
             for (int i = 0; i < numChannels; i++)
             {
                 channels[i] = (channelRaw[i] - 2048) / 10.0f;
