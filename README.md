@@ -21,6 +21,7 @@ This repository contains a C# driver for the **Contec KT88-2400 EEG device**, en
 1. [Channel Info](#channel-info)  
 1. [Troubleshooting](#troubleshooting)  
 1. [Montage](#Montage)  
+1. [Tests](#Tests)  
 ---
 
 ## Features
@@ -138,16 +139,16 @@ Excessive Noise
 ---
 
 ## Montages
-
-![Montage 1](1.png)
-![Montage 2](2.png)
-![Montage 3](3.png)
-![Montage 4](4.png)
-![Montage 5](5.png)
-![Montage 6](6.png)
-![Montage 7](7.png)
-![Montage 8](8.png)
-![Montage 9](9.png)
+![Montage 1](./1.PNG)
+![Montage 2](./2.PNG)
+![Montage 3](./3.PNG)
+![Montage 4](./4.PNG)
+![Montage 5](./5.PNG)
+![Montage 6](./6.PNG)
+![Montage 7](./7.PNG)
+![Montage 8](./8.PNG)
+![Montage 9](./9.PNG)
+ 
 
 ---
 
@@ -158,5 +159,5 @@ Excessive Noise
 
 Each channel was tested
 
-![Test 10](10.png)
+![Test 10](./10.PNG)
 
